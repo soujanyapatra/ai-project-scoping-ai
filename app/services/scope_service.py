@@ -65,13 +65,15 @@ class ScopeService:
 
         url = f"{self.api_base.rstrip('/')}/chat/completions"
         logger.info(f"Initiating OpenAI/OpenRouter stream with model {self.model} to {url}")
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=60.0, verify=settings.llm_verify_ssl) as client:
             async with client.stream("POST", url, headers=headers, json=payload) as response:
                 if response.status_code != 200:
                     error_text = await response.aread()
                     err_msg = error_text.decode("utf-8", errors="ignore")
                     logger.error(f"OpenAI/OpenRouter error status {response.status_code}: {err_msg}")
-                    raise Exception(f"OpenAI/OpenRouter API returned status {response.status_code}: {err_msg}")
+                    if response.status_code == 429:
+                        raise Exception("rate_limit_error")
+                    raise Exception(f"API returned status {response.status_code}")
 
                 buffer = ""
                 async for chunk in response.aiter_text():
@@ -242,7 +244,14 @@ class ScopeService:
 
         except Exception as e:
             logger.error(f"Error in LLM streaming: {e}", exc_info=True)
-            yield {"type": "error", "message": f"LLM Scoping Failed: {str(e)}"}
+            err_str = str(e)
+            if "rate_limit" in err_str or "429" in err_str:
+                user_msg = "Rate limit exceeded. Please wait a few seconds before trying again."
+            elif "CERTIFICATE_VERIFY_FAILED" in err_str:
+                user_msg = "SSL Certificate verification failed. Please try again."
+            else:
+                user_msg = "Generation failed. Please check your credentials and try again."
+            yield {"type": "error", "message": user_msg}
 
     async def _generate_simulated_stream(self, payload: ScopeRequest) -> AsyncGenerator[Dict[str, Any], None]:
         """

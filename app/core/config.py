@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     llm_api_key: Optional[str] = None
     llm_model: str = "gpt-4o-mini"
     llm_api_base: str = "https://api.openai.com/v1"
+    llm_verify_ssl: bool = True
     
     fastapi_host: str = "127.0.0.1"
     fastapi_port: int = 9000
