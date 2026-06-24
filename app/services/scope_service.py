@@ -27,6 +27,14 @@ class ScopeService:
         logger.warning(f"Prompt file not found at: {prompt_path}")
         return ""
 
+    def _render_prompt(self, filename: str, context: dict) -> str:
+        from jinja2 import Template
+        template_content = self._load_prompt(filename)
+        if not template_content:
+            return ""
+        template = Template(template_content)
+        return template.render(**context)
+
     def _detect_provider(self) -> str:
         base_lower = self.api_base.lower()
         model_lower = self.model.lower()
@@ -132,19 +140,20 @@ class ScopeService:
             yield {"type": "step_start", "step": 1}
             await asyncio.sleep(0.1)
 
-            classification_prompt_tmpl = self._load_prompt("classification.txt")
-            classification_prompt = (
-                classification_prompt_tmpl
-                .replace("{project_type}", project_type_label)
-                .replace("{industry}", industry_label)
-                .replace("{budget}", budget_label)
-                .replace("{platforms}", platforms_str)
-                .replace("{timeline_start}", str(timeline_start))
-                .replace("{timeline_end}", str(timeline_end))
-                .replace("{features}", features_str)
-                .replace("{integrations}", integrations_str)
-                .replace("{constraints}", constraints_str)
-                .replace("{success_criteria}", success_criteria_str)
+            classification_prompt = self._render_prompt(
+                "classification.jinja",
+                {
+                    "project_type": project_type_label,
+                    "industry": industry_label,
+                    "budget": budget_label,
+                    "platforms": platforms_str,
+                    "timeline_start": str(timeline_start),
+                    "timeline_end": str(timeline_end),
+                    "features": features_str,
+                    "integrations": integrations_str,
+                    "constraints": constraints_str,
+                    "success_criteria": success_criteria_str,
+                }
             )
 
             messages = [
@@ -171,16 +180,17 @@ class ScopeService:
             yield {"type": "step_start", "step": 2}
             await asyncio.sleep(0.1)
 
-            risks_prompt_tmpl = self._load_prompt("risks.txt")
-            risks_prompt = (
-                risks_prompt_tmpl
-                .replace("{project_type}", project_type_label)
-                .replace("{industry}", industry_label)
-                .replace("{platforms}", platforms_str)
-                .replace("{features}", features_str)
-                .replace("{integrations}", integrations_str)
-                .replace("{constraints}", constraints_str)
-                .replace("{classification}", step1_content)
+            risks_prompt = self._render_prompt(
+                "risks.jinja",
+                {
+                    "project_type": project_type_label,
+                    "industry": industry_label,
+                    "platforms": platforms_str,
+                    "features": features_str,
+                    "integrations": integrations_str,
+                    "constraints": constraints_str,
+                    "classification": step1_content,
+                }
             )
 
             messages = [
@@ -207,19 +217,20 @@ class ScopeService:
             yield {"type": "step_start", "step": 3}
             await asyncio.sleep(0.1)
 
-            scope_prompt_tmpl = self._load_prompt("project_scope.txt")
-            scope_prompt = (
-                scope_prompt_tmpl
-                .replace("{project_type}", project_type_label)
-                .replace("{industry}", industry_label)
-                .replace("{platforms}", platforms_str)
-                .replace("{timeline_start}", str(timeline_start))
-                .replace("{timeline_end}", str(timeline_end))
-                .replace("{features}", features_str)
-                .replace("{integrations}", integrations_str)
-                .replace("{constraints}", constraints_str)
-                .replace("{classification}", step1_content)
-                .replace("{risks}", step2_content)
+            scope_prompt = self._render_prompt(
+                "project_scope.jinja",
+                {
+                    "project_type": project_type_label,
+                    "industry": industry_label,
+                    "platforms": platforms_str,
+                    "timeline_start": str(timeline_start),
+                    "timeline_end": str(timeline_end),
+                    "features": features_str,
+                    "integrations": integrations_str,
+                    "constraints": constraints_str,
+                    "classification": step1_content,
+                    "risks": step2_content,
+                }
             )
 
             messages = [
