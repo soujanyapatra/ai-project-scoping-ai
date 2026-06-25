@@ -59,7 +59,7 @@ pip install -r requirements.txt
 ### 3. Run the Development Server
 Launch the FastAPI application on port `9000` (the default port configured in the Laravel frontend):
 ```bash
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 9000
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 9000
 ```
 
 ---
