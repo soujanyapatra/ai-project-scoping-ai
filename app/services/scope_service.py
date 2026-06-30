@@ -45,74 +45,33 @@ class ScopeService:
         return "openai"
 
     async def _stream_llm(self, messages: list) -> AsyncGenerator[str, None]:
-        provider = self._detect_provider()
-        logger.info(f"Detected LLM provider: {provider} (model: {self.model})")
-        if provider == "anthropic":
-            async for token in self._stream_anthropic(messages):
-                yield token
-        elif provider == "gemini":
-            async for token in self._stream_gemini(messages):
-                yield token
-        else:
-            async for token in self._stream_openai(messages):
-                yield token
+        from langchain_openai import ChatOpenAI
+        from langchain_core.messages import SystemMessage, HumanMessage
 
-    async def _stream_openai(self, messages: list) -> AsyncGenerator[str, None]:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:9000",
-            "X-Title": "Project Scoping Tool",
-        }
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "stream": True,
-            "temperature": 0.7,
-        }
+        lc_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                lc_messages.append(SystemMessage(content=msg["content"]))
+            else:
+                lc_messages.append(HumanMessage(content=msg["content"]))
 
-        url = f"{self.api_base.rstrip('/')}/chat/completions"
-        logger.info(f"Initiating OpenAI/OpenRouter stream with model {self.model} to {url}")
-        async with httpx.AsyncClient(timeout=60.0, verify=settings.llm_verify_ssl) as client:
-            async with client.stream("POST", url, headers=headers, json=payload) as response:
-                if response.status_code != 200:
-                    error_text = await response.aread()
-                    err_msg = error_text.decode("utf-8", errors="ignore")
-                    logger.error(f"OpenAI/OpenRouter error status {response.status_code}: {err_msg}")
-                    if response.status_code == 429:
-                        raise Exception("rate_limit_error")
-                    raise Exception(f"API returned status {response.status_code}")
-
-                buffer = ""
-                async for chunk in response.aiter_text():
-                    buffer += chunk
-                    while "\n" in buffer:
-                        line, buffer = buffer.split("\n", 1)
-                        line = line.strip()
-                        if not line:
-                            continue
-                        if line.startswith("data:"):
-                            data_content = line[5:].strip()
-                            if data_content == "[DONE]":
-                                break
-                            try:
-                                data_json = json.loads(data_content)
-                                if "choices" in data_json and len(data_json["choices"]) > 0:
-                                    delta = data_json["choices"][0].get("delta", {})
-                                    if "content" in delta:
-                                        yield delta["content"]
-                            except Exception as e:
-                                continue
-
-    async def _stream_anthropic(self, messages: list) -> AsyncGenerator[str, None]:
-        # Placeholder for future Claude integration
-        if False:
-            yield ""
-
-    async def _stream_gemini(self, messages: list) -> AsyncGenerator[str, None]:
-        # Placeholder for future Gemini integration
-        if False:
-            yield ""
+        logger.info(f"Using LangChain ChatOpenAI stream with model {self.model} to {self.api_base}")
+        
+        async_client = httpx.AsyncClient(verify=settings.llm_verify_ssl)
+        try:
+            llm = ChatOpenAI(
+                openai_api_key=self.api_key,
+                openai_api_base=self.api_base,
+                model_name=self.model,
+                temperature=0.7,
+                streaming=True,
+                http_async_client=async_client
+            )
+            
+            async for chunk in llm.astream(lc_messages):
+                yield chunk.content
+        finally:
+            await async_client.aclose()
 
     async def generate_scope(self, payload: ScopeRequest) -> AsyncGenerator[Dict[str, Any], None]:
         # Formulate variables from payload
