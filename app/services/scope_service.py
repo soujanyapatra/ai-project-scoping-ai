@@ -123,13 +123,12 @@ class ScopeService:
             step1_content = ""
             async for token in self._stream_llm(messages):
                 step1_content += token
-            
-            yield {
-                "type": "section",
-                "step": 1,
-                "section": "Complexity classification",
-                "content": step1_content
-            }
+                yield {
+                    "type": "section",
+                    "step": 1,
+                    "section": "Complexity classification",
+                    "content": step1_content
+                }
             
             logger.info("Step 1 Classification completed.")
             await asyncio.sleep(0.5)
@@ -161,13 +160,12 @@ class ScopeService:
             step2_content = ""
             async for token in self._stream_llm(messages):
                 step2_content += token
-            
-            yield {
-                "type": "section",
-                "step": 2,
-                "section": "Feature risks",
-                "content": step2_content
-            }
+                yield {
+                    "type": "section",
+                    "step": 2,
+                    "section": "Feature risks",
+                    "content": step2_content
+                }
 
             logger.info("Step 2 Risks completed.")
             await asyncio.sleep(0.5)
@@ -202,13 +200,12 @@ class ScopeService:
             step3_content = ""
             async for token in self._stream_llm(messages):
                 step3_content += token
-            
-            yield {
-                "type": "section",
-                "step": 3,
-                "section": "Scope document",
-                "content": step3_content
-            }
+                yield {
+                    "type": "section",
+                    "step": 3,
+                    "section": "Scope document",
+                    "content": step3_content
+                }
 
             logger.info("Step 3 Scope Document completed.")
             await asyncio.sleep(0.5)
