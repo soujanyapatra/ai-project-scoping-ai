@@ -97,7 +97,7 @@ class ScopeService:
             # STEP 1: Complexity Classification
             # ----------------------------------------------------
             yield {"type": "step_start", "step": 1}
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
             classification_prompt = self._render_prompt(
                 "classification.jinja",
@@ -131,13 +131,13 @@ class ScopeService:
                 }
             
             logger.info("Step 1 Classification completed.")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.01)
 
             # ----------------------------------------------------
             # STEP 2: Risks & Mitigations
             # ----------------------------------------------------
             yield {"type": "step_start", "step": 2}
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
             risks_prompt = self._render_prompt(
                 "risks.jinja",
@@ -168,13 +168,13 @@ class ScopeService:
                 }
 
             logger.info("Step 2 Risks completed.")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.01)
 
             # ----------------------------------------------------
             # STEP 3: Scope Document
             # ----------------------------------------------------
             yield {"type": "step_start", "step": 3}
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
             scope_prompt = self._render_prompt(
                 "project_scope.jinja",
@@ -208,7 +208,7 @@ class ScopeService:
                 }
 
             logger.info("Step 3 Scope Document completed.")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.01)
 
             yield {"type": "done"}
 
