@@ -127,7 +127,7 @@ class ScopeService:
                     "type": "section",
                     "step": 1,
                     "section": "Complexity classification",
-                    "content": step1_content
+                    "content": token
                 }
             
             logger.info("Step 1 Classification completed.")
@@ -164,7 +164,7 @@ class ScopeService:
                     "type": "section",
                     "step": 2,
                     "section": "Feature risks",
-                    "content": step2_content
+                    "content": token
                 }
 
             logger.info("Step 2 Risks completed.")
@@ -204,7 +204,7 @@ class ScopeService:
                     "type": "section",
                     "step": 3,
                     "section": "Scope document",
-                    "content": step3_content
+                    "content": token
                 }
 
             logger.info("Step 3 Scope Document completed.")
